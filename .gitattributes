@@ -1,0 +1,2 @@
+/NAMESPACE merge=union
+/.Rbuildignore merge=union

@@ -1,0 +1,6 @@
+*
+!.gitignore
+!*.md
+!*.R
+!*.Rproj
+!post-mortem
