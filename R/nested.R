@@ -135,7 +135,9 @@ split_nested <- function(x, col, ptype = NULL) {
 
   cells[data_idx] <- map(cells[data_idx], vec_cast, to = schema)
 
-  sizes <- map_int(cells, function(cell) if (is.null(cell)) 0L else vec_size(cell))
+  sizes <- map_int(cells, function(cell) {
+    if (is.null(cell)) 0L else vec_size(cell)
+  })
   status <- rep("rows", length(cells))
   status[sizes == 0L] <- "empty"
   status[is_null_cell] <- "null"
@@ -220,7 +222,11 @@ recombine_nested <- function(parent, detail = NULL, col = NULL) {
   }
 
   status <- parent[[nested_status_col]]
-  if (!is.character(status) || anyNA(status) || any(!(status %in% nested_status_values))) {
+  if (
+    !is.character(status) ||
+      anyNA(status) ||
+      any(!(status %in% nested_status_values))
+  ) {
     bad <- if (is.character(status)) {
       which(is.na(status) | !(status %in% nested_status_values))
     } else {
@@ -230,7 +236,12 @@ recombine_nested <- function(parent, detail = NULL, col = NULL) {
   }
 
   count <- parent[[nested_count_col]]
-  if (!is.numeric(count) || anyNA(count) || !is_integerish(count) || any(count < 0)) {
+  if (
+    !is.numeric(count) ||
+      anyNA(count) ||
+      !is_integerish(count) ||
+      any(count < 0)
+  ) {
     bad <- if (is.numeric(count) && !anyNA(count) && is_integerish(count)) {
       which(count < 0)
     } else {
@@ -240,9 +251,14 @@ recombine_nested <- function(parent, detail = NULL, col = NULL) {
   }
   count <- as.integer(count)
 
-  mismatch <- (status == "rows" & count == 0L) | (status != "rows" & count != 0L)
+  mismatch <- (status == "rows" & count == 0L) |
+    (status != "rows" & count != 0L)
   if (any(mismatch)) {
-    abort_recombine_nested_status_count(keys[mismatch], status[mismatch], count[mismatch])
+    abort_recombine_nested_status_count(
+      keys[mismatch],
+      status[mismatch],
+      count[mismatch]
+    )
   }
 
   missing_meta <- setdiff(nested_detail_meta, names(detail))
@@ -371,15 +387,27 @@ abort_nested_unknown_column <- function(col_name, call = caller_env()) {
 abort_nested_column_must_be_list <- function(col_name, call = caller_env()) {
   tibble_abort(
     call = call,
-    paste0("Column ", tick(col_name), " must be a list column of nested tibbles.")
+    paste0(
+      "Column ",
+      tick(col_name),
+      " must be a list column of nested tibbles."
+    )
   )
 }
 
-abort_nested_cell_must_be_data_frame <- function(col_name, pos, call = caller_env()) {
+abort_nested_cell_must_be_data_frame <- function(
+  col_name,
+  pos,
+  call = caller_env()
+) {
   tibble_abort(
     call = call,
     problems(
-      paste0("Each cell of column ", tick(col_name), " must be a tibble or `NULL`:"),
+      paste0(
+        "Each cell of column ",
+        tick(col_name),
+        " must be a tibble or `NULL`:"
+      ),
       paste0("Row ", pos)
     ),
     pos = pos
@@ -394,7 +422,11 @@ abort_nested_schema_unknown <- function(col_name, call = caller_env()) {
   tibble_abort(
     call = call,
     bullets(
-      paste0("Can't determine the detail schema of column ", tick(col_name), " because all cells are `NULL`:"),
+      paste0(
+        "Can't determine the detail schema of column ",
+        tick(col_name),
+        " because all cells are `NULL`:"
+      ),
       i = "Supply a template via the `ptype` argument."
     )
   )
@@ -403,17 +435,37 @@ abort_nested_schema_unknown <- function(col_name, call = caller_env()) {
 abort_nested_schema_reserved <- function(cols, call = caller_env()) {
   tibble_abort(
     call = call,
-    pluralise_commas("The detail schema uses reserved column name(s) ", tick(cols), ".")
+    pluralise_commas(
+      "The detail schema uses reserved column name(s) ",
+      tick(cols),
+      "."
+    )
   )
 }
 
-abort_nested_cell_schema_mismatch <- function(col_name, pos, missing, extra, call = caller_env()) {
+abort_nested_cell_schema_mismatch <- function(
+  col_name,
+  pos,
+  missing,
+  extra,
+  call = caller_env()
+) {
   tibble_abort(
     call = call,
     bullets(
-      paste0("Cell ", pos, " of column ", tick(col_name), " doesn't match the detail schema:"),
-      x = if (has_length(missing)) pluralise_commas("Missing column(s) ", tick(missing)),
-      x = if (has_length(extra)) pluralise_commas("Unexpected column(s) ", tick(extra))
+      paste0(
+        "Cell ",
+        pos,
+        " of column ",
+        tick(col_name),
+        " doesn't match the detail schema:"
+      ),
+      x = if (has_length(missing)) {
+        pluralise_commas("Missing column(s) ", tick(missing))
+      },
+      x = if (has_length(extra)) {
+        pluralise_commas("Unexpected column(s) ", tick(extra))
+      }
     ),
     pos = pos
   )
@@ -422,7 +474,11 @@ abort_nested_cell_schema_mismatch <- function(col_name, pos, missing, extra, cal
 abort_nested_parent_reserved <- function(cols, call = caller_env()) {
   tibble_abort(
     call = call,
-    pluralise_commas("`x` already contains reserved column name(s) ", tick(cols), ".")
+    pluralise_commas(
+      "`x` already contains reserved column name(s) ",
+      tick(cols),
+      "."
+    )
   )
 }
 
@@ -440,17 +496,29 @@ abort_recombine_nested_need_detail <- function(call = caller_env()) {
   tibble_abort(call = call, "Must supply a `detail` table.")
 }
 
-abort_recombine_nested_missing_meta <- function(which, cols, call = caller_env()) {
+abort_recombine_nested_missing_meta <- function(
+  which,
+  cols,
+  call = caller_env()
+) {
   tibble_abort(
     call = call,
-    pluralise_commas(paste0("The `", which, "` table is missing metadata column(s) "), tick(cols), ".")
+    pluralise_commas(
+      paste0("The `", which, "` table is missing metadata column(s) "),
+      tick(cols),
+      "."
+    )
   )
 }
 
 abort_recombine_nested_bad_key <- function(call = caller_env()) {
   tibble_abort(
     call = call,
-    paste0("Column ", tick(nested_key_col), " of the parent table must be an integerish vector without missing values.")
+    paste0(
+      "Column ",
+      tick(nested_key_col),
+      " of the parent table must be an integerish vector without missing values."
+    )
   )
 }
 
@@ -458,7 +526,11 @@ abort_recombine_nested_key_duplicated <- function(keys, call = caller_env()) {
   tibble_abort(
     call = call,
     problems(
-      paste0("Column ", tick(nested_key_col), " of the parent table must be unique:"),
+      paste0(
+        "Column ",
+        tick(nested_key_col),
+        " of the parent table must be unique:"
+      ),
       paste0("Key ", keys)
     ),
     keys = keys
@@ -469,7 +541,11 @@ abort_recombine_nested_bad_status <- function(keys, call = caller_env()) {
   tibble_abort(
     call = call,
     problems(
-      paste0("Column ", tick(nested_status_col), ' must be one of "rows", "empty", or "null":'),
+      paste0(
+        "Column ",
+        tick(nested_status_col),
+        ' must be one of "rows", "empty", or "null":'
+      ),
       paste0("Key ", keys)
     ),
     keys = keys
@@ -480,18 +556,33 @@ abort_recombine_nested_bad_count <- function(keys, call = caller_env()) {
   tibble_abort(
     call = call,
     problems(
-      paste0("Column ", tick(nested_count_col), " must contain non-negative whole numbers:"),
+      paste0(
+        "Column ",
+        tick(nested_count_col),
+        " must contain non-negative whole numbers:"
+      ),
       paste0("Key ", keys)
     ),
     keys = keys
   )
 }
 
-abort_recombine_nested_status_count <- function(keys, status, count, call = caller_env()) {
+abort_recombine_nested_status_count <- function(
+  keys,
+  status,
+  count,
+  call = caller_env()
+) {
   tibble_abort(
     call = call,
     problems(
-      paste0("Columns ", tick(nested_status_col), " and ", tick(nested_count_col), " are inconsistent:"),
+      paste0(
+        "Columns ",
+        tick(nested_status_col),
+        " and ",
+        tick(nested_count_col),
+        " are inconsistent:"
+      ),
       paste0("Key ", keys, ': status "', status, '" with count ', count)
     ),
     keys = keys
@@ -501,24 +592,40 @@ abort_recombine_nested_status_count <- function(keys, status, count, call = call
 abort_recombine_nested_bad_detail_key <- function(call = caller_env()) {
   tibble_abort(
     call = call,
-    paste0("Column ", tick(nested_key_col), " of the detail table must be an integerish vector without missing values.")
+    paste0(
+      "Column ",
+      tick(nested_key_col),
+      " of the detail table must be an integerish vector without missing values."
+    )
   )
 }
 
 abort_recombine_nested_bad_row_no <- function(call = caller_env()) {
   tibble_abort(
     call = call,
-    paste0("Column ", tick(nested_row_no_col), " of the detail table must be an integerish vector without missing values.")
+    paste0(
+      "Column ",
+      tick(nested_row_no_col),
+      " of the detail table must be an integerish vector without missing values."
+    )
   )
 }
 
-abort_recombine_nested_schema_mismatch <- function(missing, extra, call = caller_env()) {
+abort_recombine_nested_schema_mismatch <- function(
+  missing,
+  extra,
+  call = caller_env()
+) {
   tibble_abort(
     call = call,
     bullets(
       "The detail table doesn't match the schema recorded by `split_nested()`:",
-      x = if (has_length(missing)) pluralise_commas("Missing column(s) ", tick(missing)),
-      x = if (has_length(extra)) pluralise_commas("Unexpected column(s) ", tick(extra))
+      x = if (has_length(missing)) {
+        pluralise_commas("Missing column(s) ", tick(missing))
+      },
+      x = if (has_length(extra)) {
+        pluralise_commas("Unexpected column(s) ", tick(extra))
+      }
     )
   )
 }
@@ -534,7 +641,11 @@ abort_recombine_nested_orphan_key <- function(keys, call = caller_env()) {
   )
 }
 
-abort_recombine_nested_row_no_duplicated <- function(keys, row_nos, call = caller_env()) {
+abort_recombine_nested_row_no_duplicated <- function(
+  keys,
+  row_nos,
+  call = caller_env()
+) {
   tibble_abort(
     call = call,
     problems(
@@ -546,7 +657,11 @@ abort_recombine_nested_row_no_duplicated <- function(keys, row_nos, call = calle
   )
 }
 
-abort_recombine_nested_row_no_out_of_bounds <- function(keys, row_nos, call = caller_env()) {
+abort_recombine_nested_row_no_out_of_bounds <- function(
+  keys,
+  row_nos,
+  call = caller_env()
+) {
   tibble_abort(
     call = call,
     problems(
@@ -558,12 +673,21 @@ abort_recombine_nested_row_no_out_of_bounds <- function(keys, row_nos, call = ca
   )
 }
 
-abort_recombine_nested_row_missing <- function(keys, row_nos, call = caller_env()) {
+abort_recombine_nested_row_missing <- function(
+  keys,
+  row_nos,
+  call = caller_env()
+) {
   tibble_abort(
     call = call,
     problems(
       "Detail rows are missing for the following parent keys:",
-      paste0("Key ", keys, ", row number(s) ", map_chr(row_nos, paste, collapse = ", "))
+      paste0(
+        "Key ",
+        keys,
+        ", row number(s) ",
+        map_chr(row_nos, paste, collapse = ", ")
+      )
     ),
     keys = keys,
     row_nos = row_nos
@@ -573,6 +697,10 @@ abort_recombine_nested_row_missing <- function(keys, row_nos, call = caller_env(
 abort_recombine_nested_col_clash <- function(col_name, call = caller_env()) {
   tibble_abort(
     call = call,
-    paste0("Can't restore column ", tick(col_name), ", already present in the parent table.")
+    paste0(
+      "Can't restore column ",
+      tick(col_name),
+      ", already present in the parent table."
+    )
   )
 }

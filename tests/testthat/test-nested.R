@@ -142,7 +142,10 @@ test_that("split_nested() validates its input", {
     abort_nested_schema_reserved(".row_no")
   )
   expect_tibble_abort(
-    split_nested(tibble(.parent_id = 1, details = list(tibble(v = 1))), details),
+    split_nested(
+      tibble(.parent_id = 1, details = list(tibble(v = 1))),
+      details
+    ),
     abort_nested_parent_reserved(".parent_id")
   )
 })
